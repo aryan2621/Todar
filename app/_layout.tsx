@@ -1,24 +1,35 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack, useRouter } from "expo-router";
+import React, { useEffect } from "react";
+import {
+    requestNotificationPermissions,
+    setupNotificationListener,
+} from "../utils/notifications";
+import { ThemeProvider } from "../contexts/ThemeContext";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+export default function Layout() {
+    const router = useRouter();
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+    useEffect(() => {
+        requestNotificationPermissions();
+        const subscription = setupNotificationListener(async (habitId) => {
+            router.push(`/task-completion?habitId=${habitId}`);
+        });
+        return () => {
+            subscription.remove();
+        };
+    }, []);
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+    return (
+        <ThemeProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="select-habits" />
+                <Stack.Screen name="configure-notifications" />
+                <Stack.Screen name="home" />
+                <Stack.Screen name="task-completion" />
+                <Stack.Screen name="create-habit" />
+                <Stack.Screen name="settings" />
+            </Stack>
+        </ThemeProvider>
+    );
 }
